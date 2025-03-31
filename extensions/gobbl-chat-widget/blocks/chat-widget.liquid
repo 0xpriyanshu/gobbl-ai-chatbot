@@ -1,0 +1,114 @@
+{% comment %}
+  @name Gobbl Chat Widget
+  @description Adds the Gobbl AI chatbot to your store
+{% endcomment %}
+
+<div id="gobbl-chat-container" data-shop-domain="{{ shop.permanent_domain }}"></div>
+
+{% schema %}
+{
+  "name": "Gobbl AI Chatbot",
+  "target": "body",
+  "settings": [
+    {
+      "type": "color",
+      "id": "chat_icon_color",
+      "label": "Chat Icon Color",
+      "default": "#fb923c"
+    },
+    {
+      "type": "range",
+      "id": "chat_widget_width",
+      "label": "Chat Widget Width",
+      "min": 300,
+      "max": 600,
+      "step": 50,
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "chat_widget_height",
+      "label": "Chat Widget Height",
+      "min": 400,
+      "max": 800,
+      "step": 50,
+      "default": 600
+    }
+  ]
+}
+{% endschema %}
+
+<script>
+  (function(){
+    // Create the chat icon button
+    var chatIcon = document.createElement('div');
+    chatIcon.id = 'chatIcon';
+    chatIcon.style.position = 'fixed';
+    chatIcon.style.bottom = '20px';
+    chatIcon.style.right = '20px';
+    chatIcon.style.width = '60px';
+    chatIcon.style.height = '60px';
+    chatIcon.style.background = '{{ block.settings.chat_icon_color }}';
+    chatIcon.style.borderRadius = '50%';
+    chatIcon.style.cursor = 'pointer';
+    chatIcon.style.zIndex = '9998';
+    chatIcon.style.display = 'flex';
+    chatIcon.style.alignItems = 'center';
+    chatIcon.style.justifyContent = 'center';
+    chatIcon.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+    
+    chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
+    
+    // Create the iframe for the chatbot
+    var iframe = document.createElement('iframe');
+    iframe.id = 'chatbotIframe';
+    iframe.src = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
+    iframe.style.position = 'fixed';
+    iframe.style.bottom = '80px';
+    iframe.style.right = '20px';
+    iframe.style.width = '{{ block.settings.chat_widget_width }}px';
+    iframe.style.height = '{{ block.settings.chat_widget_height }}px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '12px';
+    iframe.style.zIndex = '9999';
+    iframe.style.display = 'none';
+    
+    // Create the close button for the chatbot
+    var closeBtn = document.createElement('div');
+    closeBtn.id = 'chatbotCloseBtn';
+    closeBtn.style.position = 'fixed';
+    closeBtn.style.top = '12px';
+    closeBtn.style.right = '20px';
+    closeBtn.style.width = '30px';
+    closeBtn.style.height = '30px';
+    closeBtn.style.background = '{{ block.settings.chat_icon_color }}';
+    closeBtn.style.borderRadius = '50%';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.zIndex = '10000';
+    closeBtn.style.display = 'none';
+    closeBtn.style.alignItems = 'center';
+    closeBtn.style.justifyContent = 'center';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.fontWeight = 'bold';
+    closeBtn.style.color = '#fff';
+    closeBtn.innerHTML = '&#10005;';
+    
+    // Toggle the chatbot iframe on icon click
+    chatIcon.addEventListener('click', function(){
+      var isHidden = iframe.style.display === 'none';
+      iframe.style.display = isHidden ? 'block' : 'none';
+      closeBtn.style.display = isHidden ? 'flex' : 'none';
+    });
+    
+    // Hide the chatbot iframe on close button click
+    closeBtn.addEventListener('click', function(){
+      iframe.style.display = 'none';
+      closeBtn.style.display = 'none';
+    });
+    
+    // Append the elements to the body
+    document.body.appendChild(chatIcon);
+    document.body.appendChild(iframe);
+    document.body.appendChild(closeBtn);
+  })();
+</script>

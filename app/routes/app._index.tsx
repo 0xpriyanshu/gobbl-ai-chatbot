@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { json, redirect } from "@remix-run/node";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -15,11 +16,20 @@ import {
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
+import { isOnboardingComplete } from "../models/onboarding.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const onboardingComplete = await isOnboardingComplete(session.shop);
+  
+  if (!onboardingComplete) {
+    return redirect("/app/onboarding");
+  }
 
-  return null;
+  return json({
+    shop: session.shop,
+    accessToken: session.accessToken // For server-side use only, don't expose to frontend
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

@@ -13,6 +13,8 @@ export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // This returns the authenticated session
   const { session } = await authenticate.admin(request);
+
+  console.log("Session>", session)
   
   // Extract shop domain and access token
   const shopDomain = session.shop;

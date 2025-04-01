@@ -30,3 +30,16 @@ model Session {
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
+
+// Add this new model for onboarding data
+model OnboardingData {
+  id             String    @id @default(uuid())
+  shop           String    @unique
+  businessName   String
+  contactEmail   String
+  industry       String
+  acceptedTerms  Boolean   @default(false)
+  isComplete     Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}

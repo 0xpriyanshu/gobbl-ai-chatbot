@@ -3,34 +3,22 @@
 client_id = "5edf20a96aa9824fec154c0a0e314dc5"
 name = "gobbl-ai-chatbot"
 handle = "gobbl-ai-chatbot-1"
-application_url = "https://dispatch-reconstruction-maintain-dating.trycloudflare.com"
+application_url = "https://admin.shopify.com/apps/gobbl-ai-chatbot-1"
 embedded = true
 
 [build]
+automatically_update_urls_on_dev = false
 include_config_on_deploy = true
-automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-01"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_customers,read_products,read_themes,write_customers,write_products,write_script_tags,write_themes"
 
 [auth]
-redirect_urls = [
-  "https://dispatch-reconstruction-maintain-dating.trycloudflare.com/auth/callback",
-  "https://dispatch-reconstruction-maintain-dating.trycloudflare.com/auth/shopify/callback",
-  "https://dispatch-reconstruction-maintain-dating.trycloudflare.com/api/auth/callback"
-]
+redirect_urls = [ ]
 
 [pos]
 embedded = false

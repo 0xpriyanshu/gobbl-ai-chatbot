@@ -1,24 +1,28 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5edf20a96aa9824fec154c0a0e314dc5"
-name = "gobbl-ai-chatbot"
-handle = "gobbl-ai-chatbot-1"
-application_url = "https://admin.shopify.com/apps/gobbl-ai-chatbot-1"
-embedded = true
+client_id = "53e8ddc5e5f7a441b5c5144cf7788d02"
+name = "new-app"
+handle = "new-app-1012"
+application_url = "https://heart-metabolism-parish-humor.trycloudflare.com"
+embedded = false
 
 [build]
-automatically_update_urls_on_dev = false
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customers,read_products,read_themes,write_customers,write_products,write_script_tags,write_themes"
+scopes = "read_customers,read_products,read_themes,write_customers,write_products,write_script_tags,write_themes,write_cart_transforms"
 
 [auth]
-redirect_urls = [ ]
+redirect_urls = [
+  "https://heart-metabolism-parish-humor.trycloudflare.com/auth/callback",
+  "https://heart-metabolism-parish-humor.trycloudflare.com/auth/shopify/callback",
+  "https://heart-metabolism-parish-humor.trycloudflare.com/api/auth/callback"
+]
 
 [pos]
 embedded = false

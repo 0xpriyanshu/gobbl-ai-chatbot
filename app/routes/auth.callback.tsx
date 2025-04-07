@@ -3,7 +3,7 @@ import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { authenticate, sessionStorage } from "../shopify.server";
 
 // Use your external onboarding URL (ngrok)
-const EXTERNAL_ONBOARDING_URL = "https://5a24-223-181-35-118.ngrok-free.app";
+const EXTERNAL_ONBOARDING_URL = "https://shopify-onboarding-sage.vercel.app";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("Auth callback received:", request.url);

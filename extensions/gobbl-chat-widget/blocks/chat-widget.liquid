@@ -4,10 +4,6 @@
 {% endcomment %}
 
 {% if customer %}
-  {% comment %}
-    Generate or fetch a signed auth token based on the customer data.
-    Here we assume that the token is available as customer.auth_token.
-  {% endcomment %}
   {% assign auth_token = customer.auth_token %}
   {% assign customer_data = customer | json %}
 {% else %}
@@ -56,204 +52,137 @@
 }
 {% endschema %}
 
-<!-- Chat Widget Initialization -->
 <script>
-  (function(){
-    // Get the seller ID from settings
-    var sellerId = "{{ block.settings.seller_id }}";
-    
-    // DEBUG: Log the seller ID to console to verify it's being read from settings
-    console.log("🔍 Gobbl Debug - Seller ID from theme settings:", sellerId || "NOT SET");
-    
-    // Create a hidden debug element to help troubleshoot
-    var debugInfo = document.createElement('div');
-    debugInfo.id = 'gobbl-debug-info';
-    debugInfo.style.display = 'none'; // Hidden by default, inspect element to see it
-    debugInfo.innerHTML = "Shop: {{ shop.permanent_domain }} | Seller ID: " + (sellerId || "NOT CONFIGURED");
-    document.body.appendChild(debugInfo);
-    
-    // Check if Seller ID is provided
-    if (!sellerId) {
-      console.warn("⚠️ Gobbl Chat: Seller ID is not configured. Please enter your Seller ID in the theme settings.");
-    } else {
-      console.log("✅ Gobbl Chat: Seller ID is configured:", sellerId.substring(0, 4) + "..." + sellerId.substring(sellerId.length - 4));
-    }
-    
-    // Create the chat icon button
-    var chatIcon = document.createElement('div');
-    chatIcon.id = 'chatIcon';
-    chatIcon.style.position = 'fixed';
-    chatIcon.style.bottom = '20px';
-    chatIcon.style.right = '20px';
-    chatIcon.style.width = '60px';
-    chatIcon.style.height = '60px';
-    chatIcon.style.background = '{{ block.settings.chat_icon_color }}';
-    chatIcon.style.borderRadius = '50%';
-    chatIcon.style.cursor = 'pointer';
-    chatIcon.style.zIndex = '9998';
-    chatIcon.style.display = 'flex';
-    chatIcon.style.alignItems = 'center';
-    chatIcon.style.justifyContent = 'center';
-    chatIcon.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
-    chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
-    
-    // Build the iframe URL with the shop domain and seller ID
-    var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
-    
-    // Add seller ID to the URL if available
-    if (sellerId) {
-      iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
-    }
-    
-    // Add a debug parameter to make it easier to identify in logs
-    iframeUrl += '&debug=true';
-    
-    {% if auth_token != "" %}
-      iframeUrl += '&auth_token={{ auth_token }}';
-    {% endif %}
-    
-    // DEBUG: Log the complete iframe URL
-    console.log("🔍 Gobbl Debug - iframe URL:", iframeUrl);
-    
-    // Create the iframe for the chatbot
-    var iframe = document.createElement('iframe');
-    iframe.id = 'chatbotIframe';
-    iframe.src = iframeUrl;
-    iframe.style.position = 'fixed';
-    iframe.style.bottom = '80px';
-    iframe.style.right = '20px';
-    iframe.style.width = '{{ block.settings.chat_widget_width }}px';
-    iframe.style.height = '{{ block.settings.chat_widget_height }}px';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '12px';
-    iframe.style.zIndex = '9999';
-    // Hide the chat by default (change to 'block' if you want it open by default)
+(function(){
+  var sellerId = "{{ block.settings.seller_id }}";
+  var debugInfo = document.createElement('div');
+  debugInfo.id = 'gobbl-debug-info';
+  debugInfo.style.display = 'none';
+  debugInfo.innerHTML = "Shop: {{ shop.permanent_domain }} | Seller ID: " + (sellerId || "NOT CONFIGURED");
+  document.body.appendChild(debugInfo);
+
+  var chatIcon = document.createElement('div');
+  chatIcon.id = 'chatIcon';
+  chatIcon.style.position = 'fixed';
+  chatIcon.style.bottom = '20px';
+  chatIcon.style.right = '20px';
+  chatIcon.style.width = '60px';
+  chatIcon.style.height = '60px';
+  chatIcon.style.background = '{{ block.settings.chat_icon_color }}';
+  chatIcon.style.borderRadius = '50%';
+  chatIcon.style.cursor = 'pointer';
+  chatIcon.style.zIndex = '9998';
+  chatIcon.style.display = 'flex';
+  chatIcon.style.alignItems = 'center';
+  chatIcon.style.justifyContent = 'center';
+  chatIcon.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+  chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
+
+  var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
+  if (sellerId) iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
+  iframeUrl += '&debug=true';
+  {% if auth_token != "" %}iframeUrl += '&auth_token={{ auth_token }}';{% endif %}
+
+  var iframe = document.createElement('iframe');
+  iframe.id = 'chatbotIframe';
+  iframe.src = iframeUrl;
+  iframe.style.position = 'fixed';
+  iframe.style.bottom = '80px';
+  iframe.style.right = '20px';
+  iframe.style.width = '{{ block.settings.chat_widget_width }}px';
+  iframe.style.height = '{{ block.settings.chat_widget_height }}px';
+  iframe.style.border = 'none';
+  iframe.style.borderRadius = '12px';
+  iframe.style.zIndex = '9999';
+  iframe.style.display = 'none';
+
+  var closeBtn = document.createElement('div');
+  closeBtn.id = 'chatbotCloseBtn';
+  closeBtn.style.position = 'fixed';
+  closeBtn.style.top = '12px';
+  closeBtn.style.right = '20px';
+  closeBtn.style.width = '30px';
+  closeBtn.style.height = '30px';
+  closeBtn.style.background = '{{ block.settings.chat_icon_color }}';
+  closeBtn.style.borderRadius = '50%';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.zIndex = '10000';
+  closeBtn.style.display = 'none';
+  closeBtn.style.alignItems = 'center';
+  closeBtn.style.justifyContent = 'center';
+  closeBtn.style.fontSize = '20px';
+  closeBtn.style.fontWeight = 'bold';
+  closeBtn.style.color = '#fff';
+  closeBtn.innerHTML = '&#10005;';
+
+  chatIcon.addEventListener('click', function(){
+    var isHidden = iframe.style.display === 'none';
+    iframe.style.display = isHidden ? 'block' : 'none';
+    closeBtn.style.display = isHidden ? 'flex' : 'none';
+  });
+
+  closeBtn.addEventListener('click', function(){
     iframe.style.display = 'none';
-    
-    // Create the close button for the chatbot
-    var closeBtn = document.createElement('div');
-    closeBtn.id = 'chatbotCloseBtn';
-    closeBtn.style.position = 'fixed';
-    closeBtn.style.top = '12px';
-    closeBtn.style.right = '20px';
-    closeBtn.style.width = '30px';
-    closeBtn.style.height = '30px';
-    closeBtn.style.background = '{{ block.settings.chat_icon_color }}';
-    closeBtn.style.borderRadius = '50%';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.zIndex = '10000';
-    // Hide the close button by default (since chat is hidden)
     closeBtn.style.display = 'none';
-    closeBtn.style.alignItems = 'center';
-    closeBtn.style.justifyContent = 'center';
-    closeBtn.style.fontSize = '20px';
-    closeBtn.style.fontWeight = 'bold';
-    closeBtn.style.color = '#fff';
-    closeBtn.innerHTML = '&#10005;';
-    
-    // Toggle the chatbot iframe on icon click
-    chatIcon.addEventListener('click', function(){
-      var isHidden = iframe.style.display === 'none';
-      iframe.style.display = isHidden ? 'block' : 'none';
-      closeBtn.style.display = isHidden ? 'flex' : 'none';
-      
-      // DEBUG: Log when the chat is toggled
-      console.log("🔍 Gobbl Debug - Chat widget toggled:", isHidden ? "OPENED" : "CLOSED");
-    });
-    
-    // Hide the chatbot iframe on close button click
-    closeBtn.addEventListener('click', function(){
-      iframe.style.display = 'none';
-      closeBtn.style.display = 'none';
-      
-      // DEBUG: Log when the chat is closed
-      console.log("🔍 Gobbl Debug - Chat widget closed by close button");
-    });
-    
-    // Append the elements to the body
-    document.body.appendChild(chatIcon);
-    document.body.appendChild(iframe);
-    document.body.appendChild(closeBtn);
-    
-    // Use postMessage to send auth data after the iframe loads.
-    iframe.addEventListener('load', function(){
-      // DEBUG: Log when the iframe loads
-      console.log("🔍 Gobbl Debug - iframe loaded");
-      
-      // Always send basic data to the iframe, even if the customer is not logged in
-      var messageData = {
-        shop: '{{ shop.permanent_domain }}',
-        sellerId: sellerId
-      };
-      
-      {% if auth_token != "" %}
-      // Add auth token and customer data if available
+  });
+
+  document.body.appendChild(chatIcon);
+  document.body.appendChild(iframe);
+  document.body.appendChild(closeBtn);
+
+  iframe.addEventListener('load', function(){
+    var messageData = {
+      shop: '{{ shop.permanent_domain }}',
+      sellerId: sellerId
+    };
+    {% if auth_token != "" %}
       messageData.auth_token = '{{ auth_token }}';
       messageData.customer = {{ customer_data | json }};
-      {% endif %}
-      
-      // DEBUG: Log the data being sent to the iframe
-      console.log("🔍 Gobbl Debug - Sending data to iframe:", JSON.stringify(messageData));
-      
-      // Send the data to the iframe
-      iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
-    });
-    
-    // DEBUG: Listen for messages from the iframe to verify communication
-    window.addEventListener("message", function(event) {
-      // Only log messages from our iframe
-      if (event.origin === 'https://curatehome.vercel.app') {
-        console.log("🔍 Gobbl Debug - Received message from iframe:", event.data);
-      }
-    });
-  })();
+    {% endif %}
+    iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
+  });
+})();
 </script>
 
-<!-- Listener for messages from the iframe -->
 <script>
-  window.addEventListener("message", function(event) {
-    // Ensure you check the origin in a production environment for security.
-    if (event.origin !== 'https://curatehome.vercel.app') {
-      return;
-    }
-    
-    const { type, payload } = event.data;
-    
-    // Handle the debug acknowledgment message
-    if (type === "DEBUG_ACK" && payload) {
-      console.log("🔍 Gobbl Debug - Received acknowledgment from iframe:", payload);
-    }
+window.addEventListener("message", async (event) => {
+  const { type, payload } = event.data || {};
 
-    if (type === "ADD_TO_CART" && payload && payload.id) {
-      console.log("🛒 Add to cart request from iframe:", payload);
-
-      fetch("/cart/add.js", {
+  if (type === "ADD_TO_CART") {
+    try {
+      const res = await fetch("/cart/add.js", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json"
+          Accept: "application/json",
         },
         body: JSON.stringify({
           id: payload.id,
-          quantity: payload.quantity || 1  // Fallback to 1 if not provided
-        })
-      })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("✅ Item added to Shopify cart:", data);
-        // Optionally send confirmation back to the iframe
-        event.source.postMessage(
-          { type: "CART_SUCCESS", payload: data },
-          event.origin
-        );
-      })
-      .catch((err) => {
-        console.error("❌ Cart error:", err);
-        event.source.postMessage(
-          { type: "CART_ERROR", payload: err },
-          event.origin
-        );
+          quantity: payload.quantity || 1,
+        }),
       });
+
+      const added = await res.json();
+      event.source.postMessage({ type: "CART_UPDATED", payload: added }, event.origin);
+
+      const cartRes = await fetch("/cart.js");
+      const cart = await cartRes.json();
+      const count = cart.item_count;
+      const el = document.querySelector(".cart-count");
+      if (el) {
+        el.textContent = count;
+        el.classList.add("visible");
+      }
+
+      document.dispatchEvent(new Event("shopify:cart:updated"));
+      document.dispatchEvent(new CustomEvent("cart:refresh"));
+
+      if (window.Shopify && Shopify.theme && Shopify.theme.cartDrawer && typeof Shopify.theme.cartDrawer.fetchCart === 'function') {
+        Shopify.theme.cartDrawer.fetchCart();
+      }
+    } catch (err) {
+      event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
     }
-  });
+  }
+});
 </script>

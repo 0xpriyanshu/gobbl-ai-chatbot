@@ -39,7 +39,7 @@ export default function App() {
   const location = useLocation();
 
   // Build the external URL using your ngrok URL, including shop and accessToken.
-  const externalUrl = `https://5a24-223-181-35-118.ngrok-free.app/?shop=${encodeURIComponent(
+  const externalUrl = `https://shopify-onboarding-sage.vercel.app/?shop=${encodeURIComponent(
     shopDomain
   )}&accessToken=${encodeURIComponent(accessToken)}`;
 

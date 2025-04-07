@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for gobbl-ai-chatbot on 2025-03-31T08:25:04Z
+# fly.toml app configuration file generated for gobbl-ai-chatbot-qt2h-a on 2025-04-07T13:59:40Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'gobbl-ai-chatbot'
+app = 'gobbl-ai-chatbot-qt2h-a'
 primary_region = 'bom'
 
 [build]

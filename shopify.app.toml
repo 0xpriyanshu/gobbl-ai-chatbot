@@ -3,7 +3,7 @@
 client_id = "53e8ddc5e5f7a441b5c5144cf7788d02"
 name = "Gobbl AI Chatbot"
 handle = "new-app-1012"
-application_url = "https://spec-gazette-veteran-cartridge.trycloudflare.com"
+application_url = "https://gobbl-chatbot.fly.dev/"
 embedded = false
 
 [build]
@@ -19,9 +19,7 @@ scopes = "read_customers,read_products,read_themes,write_customers,write_product
 
 [auth]
 redirect_urls = [
-  "https://spec-gazette-veteran-cartridge.trycloudflare.com/auth/callback",
-  "https://spec-gazette-veteran-cartridge.trycloudflare.com/auth/shopify/callback",
-  "https://spec-gazette-veteran-cartridge.trycloudflare.com/api/auth/callback"
+  "https://gobbl-chatbot.fly.dev/api/auth"
 ]
 
 [pos]

@@ -19,7 +19,9 @@ scopes = "read_customers,read_products,read_themes,write_customers,write_product
 
 [auth]
 redirect_urls = [
-  "https://gobbl-chatbot.fly.dev/api/auth"
+  "https://gobbl-chatbot.fly.dev/auth/callback",
+  "https://gobbl-chatbot.fly.dev/auth/shopify/callback",
+  "https://gobbl-chatbot.fly.dev/api/auth/callback"
 ]
 
 [pos]

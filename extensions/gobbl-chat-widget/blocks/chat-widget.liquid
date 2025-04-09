@@ -33,7 +33,7 @@
     {
       "type": "range",
       "id": "chat_widget_width",
-      "label": "Chat Widget Width",
+      "label": "Chat Widget Width (Desktop)",
       "min": 300,
       "max": 600,
       "step": 50,
@@ -42,7 +42,7 @@
     {
       "type": "range",
       "id": "chat_widget_height",
-      "label": "Chat Widget Height",
+      "label": "Chat Widget Height (Desktop)",
       "min": 400,
       "max": 800,
       "step": 50,
@@ -52,84 +52,182 @@
 }
 {% endschema %}
 
+<style>
+  #chatIcon {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: {{ block.settings.chat_icon_color }};
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: all 0.3s ease;
+  }
+
+  #chatbotIframe {
+    position: fixed;
+    border: none;
+    border-radius: 12px;
+    z-index: 999999;
+    display: none;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+
+  #chatbotCloseBtn {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    background: {{ block.settings.chat_icon_color }};
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+
+  /* Mobile styles */
+  @media screen and (max-width: 767px) {
+    #chatbotIframe.mobile-open {
+      width: 100% !important;
+      height: 100% !important;
+      bottom: 0 !important;
+      right: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    #chatbotCloseBtn.mobile-visible {
+      top: 20px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+    }
+  }
+</style>
+
 <script>
 (function(){
   var sellerId = "{{ block.settings.seller_id }}";
+  var isMobile = window.innerWidth <= 767;
+  
+  // Debug info
   var debugInfo = document.createElement('div');
   debugInfo.id = 'gobbl-debug-info';
   debugInfo.style.display = 'none';
   debugInfo.innerHTML = "Shop: {{ shop.permanent_domain }} | Seller ID: " + (sellerId || "NOT CONFIGURED");
   document.body.appendChild(debugInfo);
 
+  // Chat icon
   var chatIcon = document.createElement('div');
   chatIcon.id = 'chatIcon';
-  chatIcon.style.position = 'fixed';
-  chatIcon.style.bottom = '20px';
-  chatIcon.style.right = '20px';
-  chatIcon.style.width = '60px';
-  chatIcon.style.height = '60px';
-  chatIcon.style.background = '{{ block.settings.chat_icon_color }}';
-  chatIcon.style.borderRadius = '50%';
-  chatIcon.style.cursor = 'pointer';
-  chatIcon.style.zIndex = '9998';
-  chatIcon.style.display = 'flex';
-  chatIcon.style.alignItems = 'center';
-  chatIcon.style.justifyContent = 'center';
-  chatIcon.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
   chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
 
+  // Build iframe URL
   var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
   if (sellerId) iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
   iframeUrl += '&debug=true';
   {% if auth_token != "" %}iframeUrl += '&auth_token={{ auth_token }}';{% endif %}
 
+  // Create iframe
   var iframe = document.createElement('iframe');
   iframe.id = 'chatbotIframe';
   iframe.src = iframeUrl;
-  iframe.style.position = 'fixed';
-  iframe.style.bottom = '80px';
-  iframe.style.right = '20px';
-  iframe.style.width = '{{ block.settings.chat_widget_width }}px';
-  iframe.style.height = '{{ block.settings.chat_widget_height }}px';
-  iframe.style.border = 'none';
-  iframe.style.borderRadius = '12px';
-  iframe.style.zIndex = '999999';
-  iframe.style.display = 'none';
+  
+  // Set initial iframe position
+  if (isMobile) {
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.bottom = '0';
+    iframe.style.right = '0';
+    iframe.style.borderRadius = '0';
+  } else {
+    iframe.style.width = '{{ block.settings.chat_widget_width }}px';
+    iframe.style.height = '{{ block.settings.chat_widget_height }}px';
+    iframe.style.bottom = '80px';
+    iframe.style.right = '20px';
+  }
 
+  // Create close button
   var closeBtn = document.createElement('div');
   closeBtn.id = 'chatbotCloseBtn';
-  closeBtn.style.position = 'fixed';
-  closeBtn.style.top = '12px';
-  closeBtn.style.right = '20px';
-  closeBtn.style.width = '30px';
-  closeBtn.style.height = '30px';
-  closeBtn.style.background = '{{ block.settings.chat_icon_color }}';
-  closeBtn.style.borderRadius = '50%';
-  closeBtn.style.cursor = 'pointer';
-  closeBtn.style.zIndex = '10000';
-  closeBtn.style.display = 'none';
-  closeBtn.style.alignItems = 'center';
-  closeBtn.style.justifyContent = 'center';
-  closeBtn.style.fontSize = '20px';
-  closeBtn.style.fontWeight = 'bold';
-  closeBtn.style.color = '#fff';
   closeBtn.innerHTML = '&#10005;';
+  
+  // Set initial close button position
+  if (isMobile) {
+    closeBtn.style.top = '20px';
+    closeBtn.style.left = '50%';
+    closeBtn.style.transform = 'translateX(-50%)';
+  } else {
+    closeBtn.style.top = '12px';
+    closeBtn.style.right = '20px';
+  }
 
+  // Event handlers
   chatIcon.addEventListener('click', function(){
     var isHidden = iframe.style.display === 'none';
     iframe.style.display = isHidden ? 'block' : 'none';
     closeBtn.style.display = isHidden ? 'flex' : 'none';
+    
+    if (isMobile && isHidden) {
+      iframe.classList.add('mobile-open');
+      closeBtn.classList.add('mobile-visible');
+    }
   });
 
   closeBtn.addEventListener('click', function(){
     iframe.style.display = 'none';
     closeBtn.style.display = 'none';
+    
+    if (isMobile) {
+      iframe.classList.remove('mobile-open');
+      closeBtn.classList.remove('mobile-visible');
+    }
   });
 
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    var wasIsMobile = isMobile;
+    isMobile = window.innerWidth <= 767;
+    
+    // Only update if mobile state changed
+    if (wasIsMobile !== isMobile) {
+      if (isMobile) {
+        if (iframe.style.display !== 'none') {
+          iframe.classList.add('mobile-open');
+          closeBtn.classList.add('mobile-visible');
+        }
+      } else {
+        iframe.classList.remove('mobile-open');
+        closeBtn.classList.remove('mobile-visible');
+        iframe.style.width = '{{ block.settings.chat_widget_width }}px';
+        iframe.style.height = '{{ block.settings.chat_widget_height }}px';
+        iframe.style.bottom = '80px';
+        iframe.style.right = '20px';
+        closeBtn.style.top = '12px';
+        closeBtn.style.right = '20px';
+        closeBtn.style.left = 'auto';
+        closeBtn.style.transform = 'none';
+      }
+    }
+  });
+
+  // Add elements to DOM
   document.body.appendChild(chatIcon);
   document.body.appendChild(iframe);
   document.body.appendChild(closeBtn);
 
+  // Handle iframe load
   iframe.addEventListener('load', function(){
     var messageData = {
       shop: '{{ shop.permanent_domain }}',

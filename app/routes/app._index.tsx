@@ -6,7 +6,7 @@ import { Page, Card, Text, BlockStack, Layout } from "@shopify/polaris";
 import { useEffect } from "react";
 
 // External onboarding URL (ngrok)
-const EXTERNAL_ONBOARDING_URL = "https://shopify-onboarding-sage.vercel.app";
+const EXTERNAL_ONBOARDING_URL = "https://onboarding.gobbl.ai/onboarding";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Authenticate the Shopify admin request.

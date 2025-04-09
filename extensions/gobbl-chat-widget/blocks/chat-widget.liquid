@@ -1,6 +1,6 @@
 {% comment %}
   @name Gobbl Chat Widget
-  @description Adds the Gobbl AI chatbot to your store with pre‑authentication and logs user data.
+  @description Adds the Gobbl AI Chatbot to your store with pre‑authentication and logs user data.
 {% endcomment %}
 
 {% if customer %}
@@ -22,7 +22,7 @@
       "type": "text",
       "id": "seller_id",
       "label": "Seller ID (API Key)",
-      "info": "Enter your Gobbl Seller ID that was provided at the end of the onboarding process"
+      "info": "Enter your Gobbl Seller ID that was provided at the end of the onboarding process. When editing this section in the theme editor (design mode), a clickable link will appear on the left that directs you to the customization page. If a seller ID is set, the link opens https://onboarding.gobbl.ai/?sellerID=yourID; otherwise it opens https://onboarding.gobbl.ai/onboarding"
     },
     {
       "type": "color",
@@ -107,7 +107,6 @@
       right: 0 !important;
       border-radius: 0 !important;
     }
-
     #chatbotCloseBtn.mobile-visible {
       top: 15px !important;
       right: 15px !important;
@@ -117,6 +116,20 @@
       z-index: 1000000 !important;
     }
   }
+
+  /* Design mode customization link styling (only visible in the editor) */
+  #customizeChatLink {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    font-size: 14px;
+    z-index: 1000001;
+    text-decoration: none;
+    color: #333;
+  }
 </style>
 
 <script>
@@ -124,30 +137,34 @@
   var sellerId = "{{ block.settings.seller_id }}";
   var isMobile = window.innerWidth <= 767;
   
-  // Debug info
+  // Debug info (hidden in production)
   var debugInfo = document.createElement('div');
   debugInfo.id = 'gobbl-debug-info';
   debugInfo.style.display = 'none';
   debugInfo.innerHTML = "Shop: {{ shop.permanent_domain }} | Seller ID: " + (sellerId || "NOT CONFIGURED");
   document.body.appendChild(debugInfo);
 
-  // Chat icon
+  // Create chat icon element
   var chatIcon = document.createElement('div');
   chatIcon.id = 'chatIcon';
   chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
 
-  // Build iframe URL
+  // Build the iframe URL
   var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
-  if (sellerId) iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
+  if (sellerId) {
+    iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
+  }
   iframeUrl += '&debug=true';
-  {% if auth_token != "" %}iframeUrl += '&auth_token={{ auth_token }}';{% endif %}
+  {% if auth_token != "" %}
+    iframeUrl += '&auth_token={{ auth_token }}';
+  {% endif %}
 
-  // Create iframe
+  // Create the iframe for the chatbot window
   var iframe = document.createElement('iframe');
   iframe.id = 'chatbotIframe';
   iframe.src = iframeUrl;
   
-  // Set initial iframe position
+  // Set initial iframe position (different for mobile and desktop)
   if (isMobile) {
     iframe.style.width = '100%';
     iframe.style.height = '100%';
@@ -161,12 +178,12 @@
     iframe.style.right = '20px';
   }
 
-  // Create close button
+  // Create the chatbot close button
   var closeBtn = document.createElement('div');
   closeBtn.id = 'chatbotCloseBtn';
   closeBtn.innerHTML = '&#10005;';
   
-  // Set initial close button position
+  // Set initial close button position based on device
   if (isMobile) {
     closeBtn.style.top = '15px';
     closeBtn.style.right = '15px';
@@ -176,35 +193,32 @@
     closeBtn.style.right = '10px';
   }
 
-  // Event handlers
+  // Toggle display of chatbot iframe when clicking the chat icon
   chatIcon.addEventListener('click', function(){
     var isHidden = iframe.style.display === 'none';
     iframe.style.display = isHidden ? 'block' : 'none';
     closeBtn.style.display = isHidden ? 'flex' : 'none';
-    
     if (isMobile && isHidden) {
       iframe.classList.add('mobile-open');
       closeBtn.classList.add('mobile-visible');
     }
   });
 
+  // Close the chatbot when the close button is clicked
   closeBtn.addEventListener('click', function(){
     iframe.style.display = 'none';
     closeBtn.style.display = 'none';
-    
     if (isMobile) {
       iframe.classList.remove('mobile-open');
       closeBtn.classList.remove('mobile-visible');
     }
   });
 
-  // Handle window resize
+  // Update positions on window resize
   window.addEventListener('resize', function() {
-    var wasIsMobile = isMobile;
+    var wasMobile = isMobile;
     isMobile = window.innerWidth <= 767;
-    
-    // Only update if mobile state changed
-    if (wasIsMobile !== isMobile) {
+    if (wasMobile !== isMobile) {
       if (isMobile) {
         if (iframe.style.display !== 'none') {
           iframe.classList.add('mobile-open');
@@ -229,12 +243,12 @@
     }
   });
 
-  // Add elements to DOM
+  // Append the chat elements to the page
   document.body.appendChild(chatIcon);
   document.body.appendChild(iframe);
   document.body.appendChild(closeBtn);
 
-  // Handle iframe load
+  // When the iframe loads, post initial data to it
   iframe.addEventListener('load', function(){
     var messageData = {
       shop: '{{ shop.permanent_domain }}',
@@ -246,6 +260,22 @@
     {% endif %}
     iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
   });
+
+  // If in design mode, add a clickable customization link on the left side.
+  if (window.Shopify && Shopify.designMode) {
+    var customizeLink = document.createElement('a');
+    // Dynamically build the URL based on whether sellerId is set.
+    if (sellerId && sellerId.trim()) {
+      customizeLink.href = "https://onboarding.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
+    } else {
+      customizeLink.href = "https://onboarding.gobbl.ai/onboarding";
+    }
+    customizeLink.textContent = "Customize Chatbot";
+    customizeLink.id = "customizeChatLink";
+    // Optionally, open in a new tab if desired:
+    customizeLink.target = "_blank";
+    document.body.appendChild(customizeLink);
+  }
 })();
 </script>
 
@@ -259,12 +289,12 @@ window.addEventListener("message", async (event) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "application/json"
         },
         body: JSON.stringify({
           id: payload.id,
-          quantity: payload.quantity || 1,
-        }),
+          quantity: payload.quantity || 1
+        })
       });
 
       const added = await res.json();

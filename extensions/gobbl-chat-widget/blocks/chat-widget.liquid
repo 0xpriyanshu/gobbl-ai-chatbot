@@ -87,7 +87,7 @@
     background: {{ block.settings.chat_icon_color }};
     border-radius: 50%;
     cursor: pointer;
-    z-index: 10000;
+    z-index: 1000000;
     display: none;
     align-items: center;
     justify-content: center;
@@ -112,6 +112,8 @@
       top: 20px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
+      position: fixed !important;
+      z-index: 1000000 !important;
     }
   }
 </style>
@@ -168,6 +170,8 @@
     closeBtn.style.top = '20px';
     closeBtn.style.left = '50%';
     closeBtn.style.transform = 'translateX(-50%)';
+    closeBtn.style.backgroundColor = '{{ block.settings.chat_icon_color }}';
+    closeBtn.style.fontSize = '20px';
   } else {
     closeBtn.style.top = '12px';
     closeBtn.style.right = '20px';

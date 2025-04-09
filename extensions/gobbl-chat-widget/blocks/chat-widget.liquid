@@ -82,8 +82,8 @@
 
   #chatbotCloseBtn {
     position: fixed;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: {{ block.settings.chat_icon_color }};
     border-radius: 50%;
     cursor: pointer;
@@ -91,7 +91,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     color: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -109,9 +109,10 @@
     }
 
     #chatbotCloseBtn.mobile-visible {
-      top: 20px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
+      top: 15px !important;
+      right: 15px !important;
+      left: auto !important;
+      transform: none !important;
       position: fixed !important;
       z-index: 1000000 !important;
     }
@@ -167,14 +168,12 @@
   
   // Set initial close button position
   if (isMobile) {
-    closeBtn.style.top = '20px';
-    closeBtn.style.left = '50%';
-    closeBtn.style.transform = 'translateX(-50%)';
+    closeBtn.style.top = '15px';
+    closeBtn.style.right = '15px';
     closeBtn.style.backgroundColor = '{{ block.settings.chat_icon_color }}';
-    closeBtn.style.fontSize = '20px';
   } else {
-    closeBtn.style.top = '12px';
-    closeBtn.style.right = '20px';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '10px';
   }
 
   // Event handlers
@@ -210,6 +209,10 @@
         if (iframe.style.display !== 'none') {
           iframe.classList.add('mobile-open');
           closeBtn.classList.add('mobile-visible');
+          closeBtn.style.top = '15px';
+          closeBtn.style.right = '15px';
+          closeBtn.style.left = 'auto';
+          closeBtn.style.transform = 'none';
         }
       } else {
         iframe.classList.remove('mobile-open');
@@ -218,8 +221,8 @@
         iframe.style.height = '{{ block.settings.chat_widget_height }}px';
         iframe.style.bottom = '80px';
         iframe.style.right = '20px';
-        closeBtn.style.top = '12px';
-        closeBtn.style.right = '20px';
+        closeBtn.style.top = '10px';
+        closeBtn.style.right = '10px';
         closeBtn.style.left = 'auto';
         closeBtn.style.transform = 'none';
       }

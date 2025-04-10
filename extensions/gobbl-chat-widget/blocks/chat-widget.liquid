@@ -11,7 +11,7 @@
   {% assign customer_data = "{}" %}
 {% endif %}
 
-{% comment %} Try different ways to get the access token and log for debugging {% endcomment %}
+{% comment %} Try different ways to get the access token {% endcomment %}
 {% assign gobbl_token = shop.metafields.gobbl.access_token %}
 {% assign gobbl_ai_token = shop.metafields.gobbl_ai.access_token %}
 {% assign shop_token = shop.access_token %}
@@ -355,6 +355,45 @@ shop_token: {{ shop_token }}
     iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
   });
 
+  // Function to fetch seller ID and redirect
+  async function getSellerIdAndRedirect(accessToken) {
+    if (!accessToken || accessToken.trim() === '') {
+      logDebug('ERROR: Cannot get seller ID - no access token available');
+      return false;
+    }
+    
+    try {
+      logDebug('Fetching seller ID from API using access token...');
+      const apiUrl = `https://aggregator.gobbl.ai/api/shopify/getSellerId?accessToken=${encodeURIComponent(accessToken)}`;
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      logDebug('API response received: ' + JSON.stringify(data));
+      
+      if (data && data.sellerId) {
+        const sellerId = data.sellerId;
+        logDebug(`Seller ID retrieved: ${sellerId.substring(0, 5)}...`);
+        
+        // Redirect to onboarding with sellerId
+        const redirectUrl = `https://onboarding.gobbl.ai/?sellerId=${encodeURIComponent(sellerId)}`;
+        logDebug(`Redirecting to: ${redirectUrl}`);
+        
+        return redirectUrl;
+      } else {
+        logDebug('ERROR: No seller ID found in API response');
+        return false;
+      }
+    } catch (error) {
+      logDebug(`ERROR fetching seller ID: ${error.message}`);
+      return false;
+    }
+  }
+
   // In design mode, add debugging tools
   if (window.Shopify && Shopify.designMode) {
     logDebug('Running in Shopify design mode, adding debug tools');
@@ -362,10 +401,32 @@ shop_token: {{ shop_token }}
     // Create Onboarding link with access token
     var onboardingLink = document.createElement('a');
     onboardingLink.id = "onboardingLink";
-    onboardingLink.href = "https://onboarding.gobbl.ai/?accessToken=" + (accessToken || "");
+    onboardingLink.href = "#";
     onboardingLink.textContent = "Gobbl Onboarding";
     onboardingLink.target = "_blank";
     onboardingLink.className = "gobbl-dynamic-link";
+    
+    // Add click handler to fetch sellerId and redirect
+    onboardingLink.addEventListener('click', async function(e) {
+      e.preventDefault();
+      logDebug('Onboarding link clicked, getting seller ID...');
+      
+      if (accessToken && accessToken.trim() !== '') {
+        const redirectUrl = await getSellerIdAndRedirect(accessToken);
+        
+        if (redirectUrl) {
+          window.open(redirectUrl, '_blank');
+        } else {
+          // Fallback to direct access token link if seller ID fetch fails
+          logDebug('Falling back to direct access token URL');
+          window.open(`https://onboarding.gobbl.ai/?accessToken=${encodeURIComponent(accessToken)}`, '_blank');
+        }
+      } else {
+        logDebug('ERROR: No access token available for onboarding');
+        window.open('https://onboarding.gobbl.ai/', '_blank');
+      }
+    });
+    
     document.body.appendChild(onboardingLink);
     
     // Create debug toggle link
@@ -382,7 +443,6 @@ shop_token: {{ shop_token }}
     document.body.appendChild(debugToggleLink);
     
     logDebug('Added debug tools to page');
-    logDebug('Onboarding URL: ' + onboardingLink.href);
   }
 })();
 </script>

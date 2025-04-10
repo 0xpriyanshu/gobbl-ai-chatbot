@@ -22,7 +22,7 @@
       "type": "text",
       "id": "seller_id",
       "label": "Seller ID (API Key)",
-      "info": "Enter your Gobbl Seller ID that was provided at the end of the onboarding process. When editing this section in the theme editor (design mode), a clickable link will appear on the left that directs you to the customization page. If a seller ID is set, the link opens https://onboarding.gobbl.ai/?sellerID=yourID; otherwise it opens https://onboarding.gobbl.ai/onboarding"
+      "info": "Enter your Gobbl Seller ID as provided after onboarding. The <a href=\"https://dashboard.gobbl.ai/?sellerID=yourID\" target=\"_blank\">Dashboard</a> link will open with your seller ID if configured; otherwise it will open the <a href=\"https://onboarding.gobbl.ai/onboarding\" target=\"_blank\">onboarding</a> page."
     },
     {
       "type": "color",
@@ -53,6 +53,7 @@
 {% endschema %}
 
 <style>
+  /* Chat icon */
   #chatIcon {
     position: fixed;
     bottom: 20px;
@@ -70,6 +71,7 @@
     transition: all 0.3s ease;
   }
 
+  /* Chatbot iframe */
   #chatbotIframe {
     position: fixed;
     border: none;
@@ -80,6 +82,7 @@
     transition: all 0.3s ease;
   }
 
+  /* Chatbot close button */
   #chatbotCloseBtn {
     position: fixed;
     width: 36px;
@@ -97,6 +100,21 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
   }
+
+  /* Design mode dynamic links */
+  .gobbl-dynamic-link {
+    position: fixed;
+    top: 50px;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    font-size: 14px;
+    z-index: 1000001;
+    text-decoration: none;
+    color: #333;
+  }
+  #dashboardLink { left: 0; }
+  #onboardingLink { left: 150px; }
 
   /* Mobile styles */
   @media screen and (max-width: 767px) {
@@ -116,24 +134,11 @@
       z-index: 1000000 !important;
     }
   }
-
-  /* Design mode customization link styling (only visible in the editor) */
-  #customizeChatLink {
-    position: fixed;
-    top: 50px;
-    left: 0;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 8px 12px;
-    font-size: 14px;
-    z-index: 1000001;
-    text-decoration: none;
-    color: #333;
-  }
 </style>
 
 <script>
 (function(){
+  // Get the seller id from settings
   var sellerId = "{{ block.settings.seller_id }}";
   var isMobile = window.innerWidth <= 767;
   
@@ -149,7 +154,7 @@
   chatIcon.id = 'chatIcon';
   chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
 
-  // Build the iframe URL
+  // Build the iframe URL for the chatbot
   var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
   if (sellerId) {
     iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
@@ -164,7 +169,7 @@
   iframe.id = 'chatbotIframe';
   iframe.src = iframeUrl;
   
-  // Set initial iframe position (different for mobile and desktop)
+  // Set initial iframe styles based on device type
   if (isMobile) {
     iframe.style.width = '100%';
     iframe.style.height = '100%';
@@ -183,7 +188,6 @@
   closeBtn.id = 'chatbotCloseBtn';
   closeBtn.innerHTML = '&#10005;';
   
-  // Set initial close button position based on device
   if (isMobile) {
     closeBtn.style.top = '15px';
     closeBtn.style.right = '15px';
@@ -261,20 +265,35 @@
     iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
   });
 
-  // If in design mode, add a clickable customization link on the left side.
+  // In design mode, add dynamic links for Dashboard and Onboarding
   if (window.Shopify && Shopify.designMode) {
-    var customizeLink = document.createElement('a');
-    // Dynamically build the URL based on whether sellerId is set.
+    // Create Dashboard link
+    var dashboardLink = document.createElement('a');
+    dashboardLink.id = "dashboardLink";
     if (sellerId && sellerId.trim()) {
-      customizeLink.href = "https://onboarding.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
+      dashboardLink.href = "https://dashboard.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
     } else {
-      customizeLink.href = "https://onboarding.gobbl.ai/onboarding";
+      dashboardLink.href = "https://dashboard.gobbl.ai/onboarding";
     }
-    customizeLink.textContent = "Customize Chatbot";
-    customizeLink.id = "customizeChatLink";
-    // Optionally, open in a new tab if desired:
-    customizeLink.target = "_blank";
-    document.body.appendChild(customizeLink);
+    dashboardLink.textContent = "Dashboard";
+    dashboardLink.target = "_blank";
+    dashboardLink.className = "gobbl-dynamic-link";
+
+    // Create Onboarding link
+    var onboardingLink = document.createElement('a');
+    onboardingLink.id = "onboardingLink";
+    if (sellerId && sellerId.trim()) {
+      onboardingLink.href = "https://onboarding.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
+    } else {
+      onboardingLink.href = "https://onboarding.gobbl.ai/onboarding";
+    }
+    onboardingLink.textContent = "Onboarding";
+    onboardingLink.target = "_blank";
+    onboardingLink.className = "gobbl-dynamic-link";
+
+    // Append both links
+    document.body.appendChild(dashboardLink);
+    document.body.appendChild(onboardingLink);
   }
 })();
 </script>
@@ -320,4 +339,12 @@ window.addEventListener("message", async (event) => {
     }
   }
 });
+</script>
+
+<script>
+  window.addEventListener('message', function(event) {
+    if (event.data?.action === 'OPEN_CART') {
+      window.location.href = '/cart';
+    }
+  });
 </script>

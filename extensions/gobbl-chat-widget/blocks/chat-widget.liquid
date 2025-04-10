@@ -380,7 +380,7 @@ shop_token: {{ shop_token }}
         logDebug(`Seller ID retrieved: ${sellerId}`);      
         
         // Redirect to onboarding with sellerId
-        const redirectUrl = `https://onboarding.gobbl.ai/?sellerId=${encodeURIComponent(sellerId)}`;
+        const redirectUrl = `https://onboarding.gobbl.ai/?sellerID=${encodeURIComponent(sellerId)}`;
         logDebug(`Redirecting to: ${redirectUrl}`);
         
         return redirectUrl;

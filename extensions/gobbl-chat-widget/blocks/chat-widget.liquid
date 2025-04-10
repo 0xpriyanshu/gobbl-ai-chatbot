@@ -375,9 +375,9 @@ shop_token: {{ shop_token }}
       const data = await response.json();
       logDebug('API response received: ' + JSON.stringify(data));
       
-      if (data && data.sellerId) {
-        const sellerId = data.sellerId;
-        logDebug(`Seller ID retrieved: ${sellerId.substring(0, 5)}...`);
+      if (data && data.result) {
+        const sellerId = data.result;
+        logDebug(`Seller ID retrieved: ${sellerId}`);      
         
         // Redirect to onboarding with sellerId
         const redirectUrl = `https://onboarding.gobbl.ai/?sellerId=${encodeURIComponent(sellerId)}`;

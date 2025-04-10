@@ -428,21 +428,6 @@ shop_token: {{ shop_token }}
     });
     
     document.body.appendChild(onboardingLink);
-    
-    // Create debug toggle link
-    var debugToggleLink = document.createElement('a');
-    debugToggleLink.id = "debugToggleLink";
-    debugToggleLink.href = "#";
-    debugToggleLink.textContent = "Toggle Debug Panel";
-    debugToggleLink.className = "gobbl-dynamic-link";
-    debugToggleLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
-      logDebug('Debug panel ' + (debugPanel.style.display === 'none' ? 'hidden' : 'shown'));
-    });
-    document.body.appendChild(debugToggleLink);
-    
-    logDebug('Added debug tools to page');
   }
 })();
 </script>

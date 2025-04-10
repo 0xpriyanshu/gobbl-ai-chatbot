@@ -11,19 +11,34 @@
   {% assign customer_data = "{}" %}
 {% endif %}
 
-<div id="gobbl-chat-container" data-shop-domain="{{ shop.permanent_domain }}"></div>
+{% comment %} Try different ways to get the access token and log for debugging {% endcomment %}
+{% assign gobbl_token = shop.metafields.gobbl.access_token %}
+{% assign gobbl_ai_token = shop.metafields.gobbl_ai.access_token %}
+{% assign shop_token = shop.access_token %}
+
+{% comment %} Log token sources in HTML comments for debugging {% endcomment %}
+<!-- 
+DEBUG INFO:
+gobbl_token: {{ gobbl_token }}
+gobbl_ai_token: {{ gobbl_ai_token }}
+shop_token: {{ shop_token }}
+-->
+
+{% assign access_token = gobbl_token | default: gobbl_ai_token | default: shop_token | default: "" %}
+
+<div id="gobbl-chat-container" 
+     data-shop-domain="{{ shop.permanent_domain }}" 
+     data-access-token="{{ access_token }}"
+     data-gobbl-token="{{ gobbl_token }}"
+     data-gobbl-ai-token="{{ gobbl_ai_token }}"
+     data-shop-token="{{ shop_token }}">
+</div>
 
 {% schema %}
 {
   "name": "Gobbl AI Chatbot",
   "target": "body",
   "settings": [
-    {
-      "type": "text",
-      "id": "seller_id",
-      "label": "Seller ID (API Key)",
-      "info": "Enter Gobbl Seller ID as provided after onboarding. The <a href=\"https://dashboard.gobbl.ai/?sellerID=yourID\" target=\"_blank\">Dashboard</a> link will open with your seller ID if configured; otherwise it will open the <a href=\"https://onboarding.gobbl.ai/onboarding\" target=\"_blank\">onboarding</a> page."
-    },
     {
       "type": "color",
       "id": "chat_icon_color",
@@ -101,6 +116,24 @@
     transition: all 0.3s ease;
   }
 
+  /* Debug panel */
+  #gobbl-debug-panel {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000002;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    display: none;
+  }
+
   /* Design mode dynamic links */
   .gobbl-dynamic-link {
     position: fixed;
@@ -113,8 +146,8 @@
     text-decoration: none;
     color: #333;
   }
-  #dashboardLink { left: 0; }
-  #onboardingLink { left: 150px; }
+  #onboardingLink { left: 10px; }
+  #debugToggleLink { left: 150px; }
 
   /* Mobile styles */
   @media screen and (max-width: 767px) {
@@ -138,31 +171,66 @@
 
 <script>
 (function(){
-  // Get the seller id from settings
-  var sellerId = "{{ block.settings.seller_id }}";
+  // Create debug panel
+  var debugPanel = document.createElement('div');
+  debugPanel.id = 'gobbl-debug-panel';
+  document.body.appendChild(debugPanel);
+  
+  // Helper function to log to debug panel
+  function logDebug(message) {
+    console.log('[GOBBL DEBUG]', message);
+    var logEntry = document.createElement('div');
+    logEntry.textContent = new Date().toISOString().slice(11, 19) + ': ' + message;
+    debugPanel.appendChild(logEntry);
+    // Auto-scroll to bottom
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+  }
+
+  // Try to get the access token from different sources
+  var containerElement = document.getElementById('gobbl-chat-container');
+  
+  logDebug('Initializing Gobbl Chat Widget...');
+  
+  if (!containerElement) {
+    logDebug('ERROR: Could not find gobbl-chat-container element');
+    return;
+  }
+  
+  var gobblToken = containerElement.getAttribute('data-gobbl-token');
+  var gobblAiToken = containerElement.getAttribute('data-gobbl-ai-token');
+  var shopToken = containerElement.getAttribute('data-shop-token');
+  var accessToken = containerElement.getAttribute('data-access-token');
+  
+  logDebug('Token sources:');
+  logDebug('- gobbl.access_token: ' + (gobblToken ? 'Found (' + gobblToken.substring(0, 5) + '...)' : 'Not found'));
+  logDebug('- gobbl_ai.access_token: ' + (gobblAiToken ? 'Found (' + gobblAiToken.substring(0, 5) + '...)' : 'Not found'));
+  logDebug('- shop.access_token: ' + (shopToken ? 'Found (' + shopToken.substring(0, 5) + '...)' : 'Not found'));
+  logDebug('- Final access_token: ' + (accessToken ? 'Using (' + accessToken.substring(0, 5) + '...)' : 'Not found'));
+
   var isMobile = window.innerWidth <= 767;
   
-  // Debug info (hidden in production)
-  var debugInfo = document.createElement('div');
-  debugInfo.id = 'gobbl-debug-info';
-  debugInfo.style.display = 'none';
-  debugInfo.innerHTML = "Shop: {{ shop.permanent_domain }} | Seller ID: " + (sellerId || "NOT CONFIGURED");
-  document.body.appendChild(debugInfo);
-
   // Create chat icon element
   var chatIcon = document.createElement('div');
   chatIcon.id = 'chatIcon';
   chatIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C7.59 3 4 6.59 4 11c0 1.74.57 3.35 1.53 4.65L4 21l5.35-1.53A7.938 7.938 0 0 0 12 19c4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>';
 
   // Build the iframe URL for the chatbot
-  var iframeUrl = 'https://curatehome.vercel.app?shop={{ shop.permanent_domain }}';
-  if (sellerId) {
-    iframeUrl += '&sellerId=' + encodeURIComponent(sellerId);
+  var shopDomain = '{{ shop.permanent_domain }}';
+  var iframeUrl = 'https://curatehome.vercel.app?shop=' + shopDomain;
+  
+  if (accessToken && accessToken.trim() !== '') {
+    iframeUrl += '&accessToken=' + encodeURIComponent(accessToken);
+    logDebug('Added accessToken to iframe URL');
+  } else {
+    logDebug('WARNING: No access token available to add to iframe URL');
   }
-  iframeUrl += '&debug=true';
+  
   {% if auth_token != "" %}
     iframeUrl += '&auth_token={{ auth_token }}';
+    logDebug('Added customer auth_token to iframe URL');
   {% endif %}
+  
+  logDebug('Iframe URL: ' + iframeUrl);
 
   // Create the iframe for the chatbot window
   var iframe = document.createElement('iframe');
@@ -206,6 +274,7 @@
       iframe.classList.add('mobile-open');
       closeBtn.classList.add('mobile-visible');
     }
+    logDebug(isHidden ? 'Opened chat widget' : 'Closed chat widget');
   });
 
   // Close the chatbot when the close button is clicked
@@ -216,6 +285,7 @@
       iframe.classList.remove('mobile-open');
       closeBtn.classList.remove('mobile-visible');
     }
+    logDebug('Closed chat widget via close button');
   });
 
   // Update positions on window resize
@@ -223,6 +293,7 @@
     var wasMobile = isMobile;
     isMobile = window.innerWidth <= 767;
     if (wasMobile !== isMobile) {
+      logDebug('Window resized, updating layout for ' + (isMobile ? 'mobile' : 'desktop'));
       if (isMobile) {
         if (iframe.style.display !== 'none') {
           iframe.classList.add('mobile-open');
@@ -251,49 +322,67 @@
   document.body.appendChild(chatIcon);
   document.body.appendChild(iframe);
   document.body.appendChild(closeBtn);
+  logDebug('Added chat elements to page');
 
   // When the iframe loads, post initial data to it
   iframe.addEventListener('load', function(){
+    logDebug('Iframe loaded, sending data via postMessage');
+    
     var messageData = {
-      shop: '{{ shop.permanent_domain }}',
-      sellerId: sellerId
+      shop: shopDomain
     };
+    
+    if (accessToken && accessToken.trim() !== '') {
+      messageData.accessToken = accessToken;
+      logDebug('Including accessToken in postMessage data');
+    } else {
+      logDebug('WARNING: No access token to include in postMessage data');
+    }
+    
     {% if auth_token != "" %}
       messageData.auth_token = '{{ auth_token }}';
-      messageData.customer = {{ customer_data | json }};
+      logDebug('Including customer auth_token in postMessage data');
     {% endif %}
+    
+    logDebug('Sending postMessage to iframe with data: ' + JSON.stringify(messageData, function(key, value) {
+      // Mask token values in logs
+      if (key === 'accessToken' || key === 'auth_token') {
+        return value.substring(0, 5) + '...';
+      }
+      return value;
+    }));
+    
     iframe.contentWindow.postMessage(messageData, 'https://curatehome.vercel.app');
   });
 
-  // In design mode, add dynamic links for Dashboard and Onboarding
+  // In design mode, add debugging tools
   if (window.Shopify && Shopify.designMode) {
-    // Create Dashboard link
-    var dashboardLink = document.createElement('a');
-    dashboardLink.id = "dashboardLink";
-    if (sellerId && sellerId.trim()) {
-      dashboardLink.href = "https://dashboard.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
-    } else {
-      dashboardLink.href = "https://dashboard.gobbl.ai/onboarding";
-    }
-    dashboardLink.textContent = "Dashboard";
-    dashboardLink.target = "_blank";
-    dashboardLink.className = "gobbl-dynamic-link";
-
-    // Create Onboarding link
+    logDebug('Running in Shopify design mode, adding debug tools');
+    
+    // Create Onboarding link with access token
     var onboardingLink = document.createElement('a');
     onboardingLink.id = "onboardingLink";
-    if (sellerId && sellerId.trim()) {
-      onboardingLink.href = "https://onboarding.gobbl.ai/?sellerID=" + encodeURIComponent(sellerId);
-    } else {
-      onboardingLink.href = "https://onboarding.gobbl.ai/onboarding";
-    }
-    onboardingLink.textContent = "Onboarding";
+    onboardingLink.href = "https://onboarding.gobbl.ai/?accessToken=" + (accessToken || "");
+    onboardingLink.textContent = "Gobbl Onboarding";
     onboardingLink.target = "_blank";
     onboardingLink.className = "gobbl-dynamic-link";
-
-    // Append both links
-    document.body.appendChild(dashboardLink);
     document.body.appendChild(onboardingLink);
+    
+    // Create debug toggle link
+    var debugToggleLink = document.createElement('a');
+    debugToggleLink.id = "debugToggleLink";
+    debugToggleLink.href = "#";
+    debugToggleLink.textContent = "Toggle Debug Panel";
+    debugToggleLink.className = "gobbl-dynamic-link";
+    debugToggleLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+      logDebug('Debug panel ' + (debugPanel.style.display === 'none' ? 'hidden' : 'shown'));
+    });
+    document.body.appendChild(debugToggleLink);
+    
+    logDebug('Added debug tools to page');
+    logDebug('Onboarding URL: ' + onboardingLink.href);
   }
 })();
 </script>
@@ -301,6 +390,18 @@
 <script>
 window.addEventListener("message", async (event) => {
   const { type, payload } = event.data || {};
+  
+  // Log incoming messages for debugging
+  if (type) {
+    const debugPanel = document.getElementById('gobbl-debug-panel');
+    if (debugPanel) {
+      const logEntry = document.createElement('div');
+      logEntry.textContent = new Date().toISOString().slice(11, 19) + ': Received message: ' + type;
+      debugPanel.appendChild(logEntry);
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
+    console.log('[GOBBL DEBUG] Received message:', type, payload);
+  }
 
   if (type === "ADD_TO_CART") {
     try {
@@ -318,6 +419,7 @@ window.addEventListener("message", async (event) => {
 
       const added = await res.json();
       event.source.postMessage({ type: "CART_UPDATED", payload: added }, event.origin);
+      console.log('[GOBBL DEBUG] Item added to cart:', added);
 
       const cartRes = await fetch("/cart.js");
       const cart = await cartRes.json();
@@ -335,6 +437,7 @@ window.addEventListener("message", async (event) => {
         Shopify.theme.cartDrawer.fetchCart();
       }
     } catch (err) {
+      console.error('[GOBBL DEBUG] Error adding to cart:', err);
       event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
     }
   }
@@ -344,6 +447,7 @@ window.addEventListener("message", async (event) => {
 <script>
   window.addEventListener('message', function(event) {
     if (event.data?.action === 'OPEN_CART') {
+      console.log('[GOBBL DEBUG] Opening cart page');
       window.location.href = '/cart';
     }
   });

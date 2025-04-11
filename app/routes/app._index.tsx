@@ -18,6 +18,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   
   const { session } = authResult;
+  console.log("session for shop:", session);
   console.log("App index - authenticated session for shop:", session.shop);
   console.log("Access token in app._index:", session.accessToken ? 
     `${session.accessToken.substring(0, 5)}...${session.accessToken.substring(session.accessToken.length - 5)}` : 

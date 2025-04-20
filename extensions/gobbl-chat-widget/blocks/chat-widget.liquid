@@ -489,34 +489,51 @@ shop_token: {{ shop_token }}
     
     if (type === "REMOVE_FROM_CART") {
       try {
+        const cartResponse = await fetch("/cart.js");
+        const cart = await cartResponse.json();
+        
+        let lineItemKey = null;
+        let lineItemPosition = null;
+        
+        for (let i = 0; i < cart.items.length; i++) {
+          if (cart.items[i].variant_id == payload.id) {
+            lineItemKey = cart.items[i].key;
+            lineItemPosition = i + 1; // Line positions are 1-indexed
+            break;
+          }
+        }
+        
+        const updatePayload = lineItemKey 
+          ? { key: lineItemKey, quantity: payload.quantity || 0 }
+          : { line: lineItemPosition, quantity: payload.quantity || 0 };
+        
+        console.log('[GOBBL DEBUG] Cart change payload:', updatePayload);
+        
         const res = await fetch("/cart/change.js", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json"
           },
-          body: JSON.stringify({
-            id: payload.id,
-            quantity: payload.quantity || 0
-          })
+          body: JSON.stringify(updatePayload)
         });
-  
+    
         const updated = await res.json();
         event.source.postMessage({ type: "CART_UPDATED", payload: updated }, event.origin);
         console.log('[GOBBL DEBUG] Cart updated:', updated);
-  
+    
         const cartRes = await fetch("/cart.js");
-        const cart = await cartRes.json();
-        const count = cart.item_count;
+        const newCart = await cartRes.json();
+        const count = newCart.item_count;
         const el = document.querySelector(".cart-count");
         if (el) {
           el.textContent = count;
           el.classList.add("visible");
         }
-  
+    
         document.dispatchEvent(new Event("shopify:cart:updated"));
         document.dispatchEvent(new CustomEvent("cart:refresh"));
-  
+    
         if (window.Shopify && Shopify.theme && Shopify.theme.cartDrawer && typeof Shopify.theme.cartDrawer.fetchCart === 'function') {
           Shopify.theme.cartDrawer.fetchCart();
         }

@@ -433,59 +433,98 @@ shop_token: {{ shop_token }}
 </script>
 
 <script>
-window.addEventListener("message", async (event) => {
-  const { type, payload } = event.data || {};
+  window.addEventListener("message", async (event) => {
+    const { type, payload } = event.data || {};
+    
+    // Log incoming messages for debugging
+    if (type) {
+      const debugPanel = document.getElementById('gobbl-debug-panel');
+      if (debugPanel) {
+        const logEntry = document.createElement('div');
+        logEntry.textContent = new Date().toISOString().slice(11, 19) + ': Received message: ' + type;
+        debugPanel.appendChild(logEntry);
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+      }
+      console.log('[GOBBL DEBUG] Received message:', type, payload);
+    }
   
-  // Log incoming messages for debugging
-  if (type) {
-    const debugPanel = document.getElementById('gobbl-debug-panel');
-    if (debugPanel) {
-      const logEntry = document.createElement('div');
-      logEntry.textContent = new Date().toISOString().slice(11, 19) + ': Received message: ' + type;
-      debugPanel.appendChild(logEntry);
-      debugPanel.scrollTop = debugPanel.scrollHeight;
-    }
-    console.log('[GOBBL DEBUG] Received message:', type, payload);
-  }
-
-  if (type === "ADD_TO_CART") {
-    try {
-      const res = await fetch("/cart/add.js", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify({
-          id: payload.id,
-          quantity: payload.quantity || 1
-        })
-      });
-
-      const added = await res.json();
-      event.source.postMessage({ type: "CART_UPDATED", payload: added }, event.origin);
-      console.log('[GOBBL DEBUG] Item added to cart:', added);
-
-      const cartRes = await fetch("/cart.js");
-      const cart = await cartRes.json();
-      const count = cart.item_count;
-      const el = document.querySelector(".cart-count");
-      if (el) {
-        el.textContent = count;
-        el.classList.add("visible");
+    if (type === "ADD_TO_CART") {
+      try {
+        const res = await fetch("/cart/add.js", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify({
+            id: payload.id,
+            quantity: payload.quantity || 1
+          })
+        });
+  
+        const added = await res.json();
+        event.source.postMessage({ type: "CART_UPDATED", payload: added }, event.origin);
+        console.log('[GOBBL DEBUG] Item added to cart:', added);
+  
+        const cartRes = await fetch("/cart.js");
+        const cart = await cartRes.json();
+        const count = cart.item_count;
+        const el = document.querySelector(".cart-count");
+        if (el) {
+          el.textContent = count;
+          el.classList.add("visible");
+        }
+  
+        document.dispatchEvent(new Event("shopify:cart:updated"));
+        document.dispatchEvent(new CustomEvent("cart:refresh"));
+  
+        if (window.Shopify && Shopify.theme && Shopify.theme.cartDrawer && typeof Shopify.theme.cartDrawer.fetchCart === 'function') {
+          Shopify.theme.cartDrawer.fetchCart();
+        }
+      } catch (err) {
+        console.error('[GOBBL DEBUG] Error adding to cart:', err);
+        event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
       }
-
-      document.dispatchEvent(new Event("shopify:cart:updated"));
-      document.dispatchEvent(new CustomEvent("cart:refresh"));
-
-      if (window.Shopify && Shopify.theme && Shopify.theme.cartDrawer && typeof Shopify.theme.cartDrawer.fetchCart === 'function') {
-        Shopify.theme.cartDrawer.fetchCart();
-      }
-    } catch (err) {
-      console.error('[GOBBL DEBUG] Error adding to cart:', err);
-      event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
     }
-  }
+    
+    if (type === "REMOVE_FROM_CART") {
+      try {
+        const res = await fetch("/cart/change.js", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify({
+            id: payload.id,
+            quantity: payload.quantity || 0
+          })
+        });
+  
+        const updated = await res.json();
+        event.source.postMessage({ type: "CART_UPDATED", payload: updated }, event.origin);
+        console.log('[GOBBL DEBUG] Cart updated:', updated);
+  
+        const cartRes = await fetch("/cart.js");
+        const cart = await cartRes.json();
+        const count = cart.item_count;
+        const el = document.querySelector(".cart-count");
+        if (el) {
+          el.textContent = count;
+          el.classList.add("visible");
+        }
+  
+        document.dispatchEvent(new Event("shopify:cart:updated"));
+        document.dispatchEvent(new CustomEvent("cart:refresh"));
+  
+        if (window.Shopify && Shopify.theme && Shopify.theme.cartDrawer && typeof Shopify.theme.cartDrawer.fetchCart === 'function') {
+          Shopify.theme.cartDrawer.fetchCart();
+        }
+      } catch (err) {
+        console.error('[GOBBL DEBUG] Error updating cart:', err);
+        event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
+      }
+    }
 });
 </script>
 

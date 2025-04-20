@@ -492,20 +492,30 @@ shop_token: {{ shop_token }}
         const cartResponse = await fetch("/cart.js");
         const cart = await cartResponse.json();
         
-        let lineItemKey = null;
-        let lineItemPosition = null;
+        console.log('[GOBBL DEBUG] Current cart:', cart);
+        
+        let lineNumber = null;
         
         for (let i = 0; i < cart.items.length; i++) {
           if (cart.items[i].variant_id == payload.id) {
-            lineItemKey = cart.items[i].key;
-            lineItemPosition = i + 1; // Line positions are 1-indexed
+            lineNumber = i + 1; 
             break;
           }
         }
         
-        const updatePayload = lineItemKey 
-          ? { key: lineItemKey, quantity: payload.quantity || 0 }
-          : { line: lineItemPosition, quantity: payload.quantity || 0 };
+        if (lineNumber === null) {
+          console.error('[GOBBL DEBUG] Item not found in cart');
+          event.source.postMessage({ 
+            type: "CART_ERROR", 
+            payload: { message: "Item not found in cart" } 
+          }, event.origin);
+          return;
+        }
+        
+        const updatePayload = {
+          line: lineNumber,
+          quantity: payload.quantity || 0
+        };
         
         console.log('[GOBBL DEBUG] Cart change payload:', updatePayload);
         
@@ -539,7 +549,10 @@ shop_token: {{ shop_token }}
         }
       } catch (err) {
         console.error('[GOBBL DEBUG] Error updating cart:', err);
-        event.source.postMessage({ type: "CART_ERROR", payload: { message: err.message } }, event.origin);
+        event.source.postMessage({ 
+          type: "CART_ERROR", 
+          payload: { message: err.message } 
+        }, event.origin);
       }
     }
 });

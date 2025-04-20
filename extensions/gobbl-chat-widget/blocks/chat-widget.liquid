@@ -489,49 +489,42 @@ shop_token: {{ shop_token }}
     
     if (type === "REMOVE_FROM_CART") {
       try {
+        // First fetch current cart to get accurate item information
         const cartResponse = await fetch("/cart.js");
         const cart = await cartResponse.json();
-        
         console.log('[GOBBL DEBUG] Current cart:', cart);
         
-        let lineNumber = null;
+        // Find the item in the cart by variant_id
+        const cartItem = cart.items.find(item => item.variant_id == payload.id);
         
-        for (let i = 0; i < cart.items.length; i++) {
-          if (cart.items[i].variant_id == payload.id) {
-            lineNumber = i + 1; 
-            break;
-          }
-        }
-        
-        if (lineNumber === null) {
-          console.error('[GOBBL DEBUG] Item not found in cart');
-          event.source.postMessage({ 
-            type: "CART_ERROR", 
-            payload: { message: "Item not found in cart" } 
-          }, event.origin);
+        if (!cartItem) {
+          console.log('[GOBBL DEBUG] Item not found in cart');
           return;
         }
         
-        const updatePayload = {
-          line: lineNumber,
-          quantity: payload.quantity || 0
-        };
+        // Determine the new quantity
+        const newQuantity = payload.quantity === 0 ? 0 : Math.max(0, cartItem.quantity - Math.abs(payload.quantity));
         
-        console.log('[GOBBL DEBUG] Cart change payload:', updatePayload);
+        console.log(`[GOBBL DEBUG] Updating item ${payload.id} to quantity ${newQuantity}`);
         
+        // Use the item key for more precise updates
         const res = await fetch("/cart/change.js", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json"
           },
-          body: JSON.stringify(updatePayload)
+          body: JSON.stringify({
+            id: cartItem.key,
+            quantity: newQuantity
+          })
         });
     
         const updated = await res.json();
         event.source.postMessage({ type: "CART_UPDATED", payload: updated }, event.origin);
         console.log('[GOBBL DEBUG] Cart updated:', updated);
     
+        // Update UI elements
         const cartRes = await fetch("/cart.js");
         const newCart = await cartRes.json();
         const count = newCart.item_count;
@@ -555,7 +548,7 @@ shop_token: {{ shop_token }}
         }, event.origin);
       }
     }
-});
+  });
 </script>
 
 <script>
